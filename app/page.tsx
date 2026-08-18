@@ -13,6 +13,7 @@ import { SiteHeader } from '@/components/site-header'
 import { ServiceModal } from '@/components/service-modal'
 import { RevealEffects } from '@/components/reveal-effects'
 import { SearchModal } from '@/components/search-modal'
+import { Analytics } from "@vercel/analytics/next"
 
 function Storefront() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -34,6 +35,7 @@ function Storefront() {
         <Menu onSelect={setSelectedProduct} />
         <DeliveryContact />
         <Features />
+        <Analytics />
       </main>
       <footer className="border-t border-white/10 bg-[#260d24] px-4 py-7 text-center text-sm text-white/55">
         <p className="font-serif text-lg font-bold text-white">F&amp;G Açaiteria &amp; Cia</p>
