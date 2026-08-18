@@ -324,3 +324,12 @@ a {
     animation: none;
   }
 }
+
+@media (max-width: 767px) {
+  .hero-image-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
