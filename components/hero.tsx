@@ -1,6 +1,7 @@
 'use client'
 
 import { Bike, BookOpen, Leaf, ShoppingBag, Sparkles } from 'lucide-react'
+import Image from 'next/image'
 
 export function Hero({ onOpenService }: { onOpenService: () => void }) {
   return (
@@ -25,7 +26,15 @@ export function Hero({ onOpenService }: { onOpenService: () => void }) {
         </div>
 
         <div className="hero-visual relative order-2 h-[260px] overflow-hidden bg-[#f6eddf] sm:h-[340px] lg:-ml-24 lg:h-auto lg:min-h-[520px]">
-          <img src="/images/hero-acai-unificado.webp" alt="Dois copos de açaí F&G com frutas e complementos" fetchPriority="high" decoding="async" className="hero-image-enter absolute bottom-[-3%] right-[-3%] h-[106%] w-auto max-w-none object-contain object-right-bottom drop-shadow-[0_22px_32px_rgba(43,17,40,.18)] sm:right-[1%] sm:h-[108%] lg:bottom-[-8%] lg:right-[-2%] lg:h-[112%]" />
+          <Image
+            src="/images/hero-acai-unificado.webp"
+            alt="Dois copos de açaí F&G com frutas e complementos"
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, 800px"
+            quality={76}
+            className="object-contain object-right-bottom drop-shadow-[0_22px_32px_rgba(43,17,40,.18)]"
+          />
         </div>
       </div>
     </section>

@@ -17,7 +17,14 @@ export function Menu({ onSelect }: { onSelect: (product: Product) => void }) {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-8 sm:gap-4 md:grid-cols-4">
-          {PRODUCTS.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} onSelect={onSelect} />)}
+          {PRODUCTS.slice(0, 4).map((product, index) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onSelect={onSelect}
+              priority={index === 0}
+            />
+          ))}
         </div>
 
         <div id="combos" className="scroll-mt-24 pt-9 sm:pt-14">
