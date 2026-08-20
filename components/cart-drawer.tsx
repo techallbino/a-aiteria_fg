@@ -21,6 +21,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
   const [number, setNumber] = useState('')
   const [freight, setFreight] = useState<Freight | null>(null)
   const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
 
   if (!open) return null
@@ -46,22 +47,58 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
     }
   }
 
-  const sendOrder = () => {
-    if (!items.length || !freight) return
+  const sendOrder = async () => {
+    if (!items.length || !freight || sending) return
+
+    setSending(true)
+
+    try {
+      const resposta = await fetch('/api/pedido/autorizar', {
+        method: 'POST',
+      })
+
+      if (resposta.status === 429) {
+        alert(
+          'Você atingiu o limite de 3 pedidos. Aguarde 10 minutos para tentar novamente.',
+        )
+        return
+      }
+
+      if (!resposta.ok) {
+        alert('Não foi possível finalizar o pedido. Tente novamente.')
+        return
+      }
+
     const lines = items.flatMap((item, itemIndex) => {
-      const header = `${itemIndex + 1}. *${item.quantity}x ${item.name}* — ${formatBRL(item.unitPrice * item.quantity)}`
+      const header =
+        `${itemIndex + 1}. *${item.quantity}x ${item.name}* — ` +
+        formatBRL(item.unitPrice * item.quantity)
+
       const cups = item.cups.map((cup, cupIndex) => {
         const parts = [
           `Fruta: ${cup.frutas.map((option) => option.name).join(', ')}`,
-          `Complementos: ${cup.complementos.map((option) => option.name).join(', ')}`,
-          cup.adicionais.length ? `Adicionais: ${cup.adicionais.map((option) => option.name).join(', ')}` : '',
+          `Complementos: ${cup.complementos
+            .map((option) => option.name)
+            .join(', ')}`,
+          cup.adicionais.length
+            ? `Adicionais: ${cup.adicionais
+                .map((option) => option.name)
+                .join(', ')}`
+            : '',
         ].filter(Boolean)
+
         return `   Copo ${cupIndex + 1} (${cup.size}) — ${parts.join(' | ')}`
       })
+
       return [header, ...cups]
     })
+
     const total = subtotal + freight.fee
-    const address = `${freight.logradouro}, ${number || 's/n'} — ${freight.bairro}, ${freight.cidade}/${freight.uf} — CEP ${cep}`
+
+    const address =
+      `${freight.logradouro}, ${number || 's/n'} — ` +
+      `${freight.bairro}, ${freight.cidade}/${freight.uf} — CEP ${cep}`
+
     const message = [
       `Olá! Quero fazer um pedido na *${STORE.name}* 💜`,
       '',
@@ -73,7 +110,16 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
       '',
       `Endereço: ${address}`,
     ].join('\n')
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+
+    const whatsappUrl =
+      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
+
+      window.location.assign(whatsappUrl)
+    } catch {
+      alert('Não foi possível verificar o pedido. Tente novamente.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -110,7 +156,6 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
                   <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold">{item.name}</h3>
-                      <p className="text-sm font-bold text-[#7a245f]">{formatBRL(item.unitPrice)}</p>
                     </div>
                     <button type="button" onClick={() => removeItem(item.lineId)} aria-label={`Remover ${item.name}`} className="text-[#7b6876] hover:text-red-600"><Trash2 className="size-4" /></button>
                   </div>
@@ -128,12 +173,19 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
                 </article>
               ))}
 
-              <section className="rounded-2xl border border-[#4a133d]/10 bg-[#f8f1f6] p-4 text-[#2b1128]">
+              <section className="rounded-2xl border border-[#7a245f]/20 bg-[#eadfea] p-4 text-[#2b1128]">
                 <h3 className="flex items-center gap-2 font-semibold"><MapPin className="size-4 text-[#7a245f]" /> Calcular entrega</h3>
                 <div className="mt-3 flex gap-2">
-                  <input value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, '').slice(0, 8))} inputMode="numeric" placeholder="CEP" aria-label="CEP" className="min-w-0 flex-1 rounded-xl border border-[#4a133d]/15 bg-white px-3 py-2.5 text-[#2b1128] outline-none placeholder:text-[#8b7887] focus:border-[#7a245f]" />
-                  <input value={number} onChange={(e) => setNumber(e.target.value.slice(0, 12))} placeholder="Número" aria-label="Número do endereço" className="w-24 rounded-xl border border-[#4a133d]/15 bg-white px-3 py-2.5 text-[#2b1128] outline-none placeholder:text-[#8b7887] focus:border-[#7a245f]" />
-                  <button type="button" onClick={calculateFreight} disabled={loading} className="rounded-xl bg-[#eadfea] px-3 text-sm font-semibold text-[#3c1835] disabled:opacity-60">{loading ? '...' : 'Calcular'}</button>
+                  <input value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, '').slice(0, 8))} inputMode="numeric" placeholder="CEP" aria-label="CEP" className="min-w-0 flex-1 rounded-xl border border-[#7a245f]/30 !bg-[#fffdf9] px-3 py-2.5 !text-[#2b1128] caret-[#7a245f] outline-none selection:bg-[#e61d68]/20 selection:text-[#2b1128] placeholder:!text-[#796774] focus:border-[#7a245f] focus:ring-2 focus:ring-[#7a245f]/15" />
+                  <input value={number} onChange={(e) => setNumber(e.target.value.slice(0, 12))} placeholder="Número" aria-label="Número do endereço" className="w-24 rounded-xl border border-[#7a245f]/30 !bg-[#fffdf9] px-3 py-2.5 !text-[#2b1128] caret-[#7a245f] outline-none selection:bg-[#e61d68]/20 selection:text-[#2b1128] placeholder:!text-[#796774] focus:border-[#7a245f] focus:ring-2 focus:ring-[#7a245f]/15" />
+                  <button
+                    type="button"
+                    onClick={calculateFreight}
+                    disabled={loading}
+                    className="rounded-xl bg-[#d8c3d3] px-3 text-sm font-semibold text-[#3c1835] transition-colors hover:bg-[#ccb1c5] disabled:opacity-60"
+                  >
+                    {loading ? '...' : 'Calcular'}
+                  </button>
                 </div>
                 {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
                 {freight && <p className="mt-3 rounded-xl bg-[#eadfea] p-3 text-sm text-[#3c1835]"><strong>{freight.logradouro}, {freight.bairro}</strong><br />Entrega: {formatBRL(freight.fee)}{freight.distanceKm ? ` · ${freight.distanceKm} km` : ''}</p>}
@@ -145,7 +197,19 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
         {!!items.length && (
           <footer className="border-t border-[#4a133d]/10 bg-[#fffdf9] p-5 text-[#2b1128]">
             <div className="mb-4 flex items-center justify-between text-lg"><span>Total</span><strong className="text-[#7a245f]">{formatBRL(subtotal + (freight?.fee || 0))}</strong></div>
-            <button type="button" onClick={sendOrder} disabled={!freight} className="flex w-full items-center justify-center gap-2 rounded-md bg-[#e61d68] px-5 py-3.5 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"><Send className="size-5" /> {freight ? 'Comprar agora' : 'Calcule o frete para continuar'}</button>
+            <button
+              type="button"
+              onClick={sendOrder}
+              disabled={!freight || sending}
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-[#e61d68] px-5 py-3.5 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Send className="size-5" />
+              {sending
+                ? 'Verificando pedido...'
+                : freight
+                  ? 'Comprar agora'
+                  : 'Calcule o frete para continuar'}
+            </button>
           </footer>
         )}
       </aside>
