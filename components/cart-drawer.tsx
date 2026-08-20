@@ -53,7 +53,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
     setSending(true)
 
     try {
-      const resposta = await fetch('/api/pedido/autorizar', {
+      const resposta = await fetch('/api/pedido', {
         method: 'POST',
       })
 
